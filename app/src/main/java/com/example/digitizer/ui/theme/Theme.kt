@@ -8,63 +8,65 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = BluePrimary,
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = BluePrimaryVariant,
-    onPrimaryContainer = Color(0xFFFFFFFF),
-    secondary = TealSecondary,
-    onSecondary = Color(0xFF000000),
-    secondaryContainer = TealSecondaryVariant,
-    onSecondaryContainer = Color(0xFFFFFFFF),
-    tertiary = AccentPurple,
-    onTertiary = Color(0xFFFFFFFF),
-    background = BackgroundDark,
-    onBackground = Color(0xFFFFFFFF),
-    surface = SurfaceDark,
-    onSurface = Color(0xFFFFFFFF),
-    surfaceVariant = CardDark,
-    onSurfaceVariant = Color(0xFFEEEEEE),
-    error = AccentRed,
-    onError = Color(0xFFFFFFFF),
-    outline = DividerDark
+private val LightColorScheme = lightColorScheme(
+    primary = Primary,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = Secondary,
+    onSecondary = OnSecondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+    tertiary = Tertiary,
+    onTertiary = OnTertiary,
+    tertiaryContainer = TertiaryContainer,
+    onTertiaryContainer = OnTertiaryContainer,
+    error = ErrorRed,
+    background = Background,
+    onBackground = OnBackground,
+    surface = Surface,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    outline = Outline
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = BluePrimary,
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = BluePrimaryLight,
-    onPrimaryContainer = Color(0xFF00174C),
-    secondary = TealSecondary,
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = TealSecondaryLight,
-    onSecondaryContainer = Color(0xFF002018),
-    tertiary = AccentPurple,
-    onTertiary = Color(0xFFFFFFFF),
-    background = BackgroundLight,
-    onBackground = Color(0xFF121212),
-    surface = SurfaceLight,
-    onSurface = Color(0xFF121212),
-    surfaceVariant = CardLight,
-    onSurfaceVariant = Color(0xFF424242),
-    error = AccentRed,
-    onError = Color(0xFFFFFFFF),
-    outline = DividerLight
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
+    onSecondaryContainer = OnSecondaryContainerDark,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+    error = ErrorRed,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark,
+    outline = OutlineDark
 )
 
 @Composable
 fun DigitizerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disable dynamic color to use our custom theme
+    dynamicColor: Boolean = false, // Disabled by default to use our custom colors
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -76,19 +78,24 @@ fun DigitizerTheme(
         else -> LightColorScheme
     }
     
-    // Set status bar and navigation bar colors
+    // Set system UI colors
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
+            
+            // Set status bar text/icons color depending on theme
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

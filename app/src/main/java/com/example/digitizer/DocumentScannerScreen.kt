@@ -3,14 +3,7 @@ package com.example.digitizer
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,19 +33,21 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -67,24 +63,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.digitizer.ui.components.AnimatedContent
-import com.example.digitizer.ui.components.GlossyCard
-import com.example.digitizer.ui.components.GlossyFloatingActionButton
-import com.example.digitizer.ui.components.GradientButton
-import com.example.digitizer.ui.components.GradientDivider
-import com.example.digitizer.ui.theme.GradientEnd
-import com.example.digitizer.ui.theme.GradientStart
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,66 +134,66 @@ fun DocumentScannerScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "Document Digitizer", 
+                        "Document Digitizer",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    ) 
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 ),
+                modifier = Modifier.shadow(elevation = 4.dp)
             )
         },
         floatingActionButton = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                GlossyFloatingActionButton(
+                // Gallery FAB
+                FloatingActionButton(
                     onClick = { 
                         imagePicker.launch() 
                     },
-                    icon = Icons.Default.Photo,
-                    contentDescription = "Select from gallery",
-                    gradientStart = MaterialTheme.colorScheme.secondary,
-                    gradientEnd = MaterialTheme.colorScheme.secondaryContainer
-                )
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.Photo, "Select from gallery")
+                }
                 
-                GlossyFloatingActionButton(
+                // Camera FAB
+                FloatingActionButton(
                     onClick = { 
-                        // Launch camera
                         cameraLauncher.launch()
                     },
-                    icon = Icons.Default.PhotoCamera,
-                    contentDescription = "Take photo"
-                )
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.PhotoCamera, "Take photo")
+                }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(
-                    color = MaterialTheme.colorScheme.background
-                )
         ) {
-            AnimatedContent(
-                visible = uiState is UiState.Initial,
-                content = { InitialState() }
-            )
-            
-            AnimatedContent(
-                visible = uiState is UiState.Loading,
-                content = { LoadingState() }
-            )
-            
-            AnimatedContent(
-                visible = uiState is UiState.Success,
-                content = {
-                    val successState = uiState as? UiState.Success ?: return@AnimatedContent
+            when (uiState) {
+                is UiState.Initial -> {
+                    InitialState()
+                }
+                is UiState.Loading -> {
+                    LoadingState()
+                }
+                is UiState.Success -> {
+                    val successState = uiState as UiState.Success
                     
                     SuccessState(
                         state = successState,
@@ -224,15 +210,11 @@ fun DocumentScannerScreen(
                         }
                     )
                 }
-            )
-            
-            AnimatedContent(
-                visible = uiState is UiState.Error,
-                content = {
-                    val errorState = uiState as? UiState.Error ?: return@AnimatedContent
+                is UiState.Error -> {
+                    val errorState = uiState as UiState.Error
                     ErrorState(errorMessage = errorState.errorMessage)
                 }
-            )
+            }
         }
     }
     
@@ -252,134 +234,44 @@ fun DocumentScannerScreen(
 
 @Composable
 fun InitialState() {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier
+                .size(140.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = CircleShape
+                )
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            val scale by animateFloatAsState(
-                targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
+            Icon(
+                imageVector = Icons.Default.Create,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
-            
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .scale(scale)
-                    .shadow(10.dp, shape = RoundedCornerShape(60.dp))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(GradientStart, GradientEnd)
-                        ),
-                        shape = RoundedCornerShape(60.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Create,
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp),
-                    tint = Color.White
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(tween(500)) + slideInVertically(
-                    initialOffsetY = { 50 },
-                    animationSpec = tween(500)
-                )
-            ) {
-                Text(
-                    text = "Scan & Digitize Documents",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(tween(700)) + slideInVertically(
-                    initialOffsetY = { 50 },
-                    animationSpec = tween(700)
-                )
-            ) {
-                Text(
-                    text = "Use the camera or select images to convert your documents to digital text",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(tween(900))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    GlossyCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(80.dp)
-                            .clickable { /* TODO */ }
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PhotoCamera,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Camera")
-                        }
-                    }
-                    
-                    GlossyCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(80.dp)
-                            .clickable { /* TODO */ }
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Photo,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Gallery")
-                        }
-                    }
-                }
-            }
         }
+        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = "Digitize Your Documents",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Capture or select documents to scan and convert to digital format",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -388,58 +280,27 @@ fun LoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Create a pulsating animation for the loading indicator
-        val pulsate by animateFloatAsState(
-            targetValue = 1.2f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioLowBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
+        CircularProgressIndicator(
+            modifier = Modifier.size(64.dp),
+            strokeWidth = 6.dp,
+            color = MaterialTheme.colorScheme.primary
         )
-        
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .scale(pulsate)
-                .shadow(8.dp, shape = RoundedCornerShape(60.dp))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(60.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(60.dp),
-                color = Color.White,
-                strokeWidth = 6.dp
-            )
-        }
-        
         Spacer(modifier = Modifier.height(32.dp))
-        
         Text(
-            text = "Processing Documents",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold
-            )
+            text = "Processing Document",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
         )
-        
         Spacer(modifier = Modifier.height(16.dp))
-        
         Text(
-            text = "Converting your documents to digital format...",
-            style = MaterialTheme.typography.bodyLarge,
+            text = "This may take a moment depending on document size",
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -467,120 +328,173 @@ fun SuccessState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .verticalScroll(scrollState)
     ) {
         // Document navigation and counter
         if (state.documents.size > 1) {
-            Row(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
-                TextButton(
-                    onClick = { viewModel.navigateToPreviousDocument() },
-                    enabled = state.currentDocumentIndex > 0
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "Previous",
-                            tint = MaterialTheme.colorScheme.primary
+                    TextButton(
+                        onClick = { viewModel.navigateToPreviousDocument() },
+                        enabled = state.currentDocumentIndex > 0,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                    ) {
+                        Text("Previous")
+                    }
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            "Previous",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
+                            text = "${state.currentDocumentIndex + 1}/${state.documents.size}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                }
-                
-                Text(
-                    text = "Document ${state.currentDocumentIndex + 1} of ${state.documents.size}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-                
-                TextButton(
-                    onClick = { viewModel.navigateToNextDocument() },
-                    enabled = state.currentDocumentIndex < state.documents.size - 1
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "Next",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
+                    
+                    TextButton(
+                        onClick = { viewModel.navigateToNextDocument() },
+                        enabled = state.currentDocumentIndex < state.documents.size - 1,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowForward,
-                            contentDescription = "Next",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    ) {
+                        Text("Next")
                     }
                 }
             }
-            
-            GradientDivider(modifier = Modifier.padding(bottom = 24.dp))
         }
         
-        // Preview image
-        Text(
-            text = "Document Preview",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
         
-        // Display current document image
+        // Document image card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(16.dp),
-                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                ),
-            shape = RoundedCornerShape(16.dp)
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Image(
-                bitmap = currentDocument.bitmap.asImageBitmap(),
-                contentDescription = "Document image",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(8.dp)
-            )
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Document Image",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                // Display current document image
+                Image(
+                    bitmap = currentDocument.bitmap.asImageBitmap(),
+                    contentDescription = "Document image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            shape = MaterialTheme.shapes.medium
+                        )
+                )
+            }
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
-        // Output filename
-        GlossyCard(
-            modifier = Modifier.fillMaxWidth()
+        // Output settings card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Column {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Document settings heading
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Document Settings",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                // Filename field
                 Text(
                     text = "Filename",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
                 
                 OutlinedTextField(
                     value = selectedFilename,
                     onValueChange = onFilenameChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    shape = MaterialTheme.shapes.small,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -589,52 +503,154 @@ fun SuccessState(
                         )
                     }
                 )
+                
+                // Target directory
+                Text(
+                    text = "Target Directory",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelectDirectory() },
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FolderOpen,
+                            contentDescription = "Select folder",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = if (targetDirectory != null) {
+                                FilePickerUtils(context).getTargetDirectoryName(targetDirectory)
+                            } else {
+                                "Select a directory"
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (targetDirectory != null) 
+                                MaterialTheme.colorScheme.onSurface 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
-        // Target directory
-        GlossyCard(
-            modifier = Modifier.fillMaxWidth()
+        // Extracted text
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Column {
-                Text(
-                    text = "Save Location",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            color = if (targetDirectory != null)
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant
-                        )
-                        .clickable { onSelectDirectory() }
-                        .padding(16.dp),
+                        .padding(bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FolderOpen,
-                        contentDescription = "Select folder",
-                        tint = MaterialTheme.colorScheme.primary
+                        imageVector = Icons.Default.Create,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (targetDirectory != null) {
-                            FilePickerUtils(context).getTargetDirectoryName(targetDirectory)
-                        } else {
-                            "Select a directory"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (targetDirectory != null) FontWeight.SemiBold else FontWeight.Normal
+                        text = "Extracted Text",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                // Extracted text section
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    color = Color(0xFFF5F5F5), // Simple light gray
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = currentDocument.extractedText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF333333), // Dark text for contrast
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Markdown text
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Create,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Markdown Text",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    color = Color(0xFFF8F8F8), // Simple light gray (slightly different)
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = currentDocument.markdownText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF333333), // Dark text for contrast
+                        modifier = Modifier.padding(12.dp)
                     )
                 }
             }
@@ -642,75 +658,33 @@ fun SuccessState(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Extracted text
-        GlossyCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                Text(
-                    text = "Extracted Text",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            color = MaterialTheme.colorScheme.surface
-                        )
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = currentDocument.extractedText,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Markdown text
-        GlossyCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                Text(
-                    text = "Markdown Format",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = currentDocument.markdownText,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
         // Save button
-        GradientButton(
-            text = "Save Document",
+        Button(
             onClick = onSave,
-            modifier = Modifier.fillMaxWidth(),
-            icon = Icons.Default.Save
-        )
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            shape = MaterialTheme.shapes.medium,
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Save",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "Save Document", 
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -721,52 +695,57 @@ fun ErrorState(errorMessage: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
-                .size(100.dp)
-                .shadow(8.dp, shape = RoundedCornerShape(50.dp))
+                .size(120.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(50.dp)
-                ),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = CircleShape
+                )
+                .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "!",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
+            Icon(
+                imageVector = Icons.Default.Create,
+                contentDescription = null,
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer
             )
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Something Went Wrong",
+            text = "Something went wrong",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Bold
+            textAlign = TextAlign.Center
         )
         
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
         Text(
             text = errorMessage,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        GradientButton(
-            text = "Try Again",
+        Button(
             onClick = { /* Reset to initial state */ },
-            icon = Icons.Default.PhotoCamera
-        )
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text("Try Again")
+        }
     }
 } 

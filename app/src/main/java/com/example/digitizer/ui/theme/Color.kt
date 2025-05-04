@@ -2,35 +2,50 @@ package com.example.digitizer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary colors
-val BluePrimary = Color(0xFF2962FF)
-val BluePrimaryVariant = Color(0xFF0039CB)
-val BluePrimaryLight = Color(0xFF768FFF)
+// Light theme colors
+val Primary = Color(0xFF006C51)
+val PrimaryContainer = Color(0xFF8FF8D3)
+val Secondary = Color(0xFF006874)
+val SecondaryContainer = Color(0xFF96F1FF)
+val Tertiary = Color(0xFF7F5700)
+val TertiaryContainer = Color(0xFFFFDEA1)
+val Background = Color(0xFFF8FDFF)
+val Surface = Color(0xFFFAFCFF)
+val SurfaceVariant = Color(0xFFEEF6F9)
+val OnPrimary = Color(0xFFFFFFFF)
+val OnPrimaryContainer = Color(0xFF002117)
+val OnSecondary = Color(0xFFFFFFFF)
+val OnSecondaryContainer = Color(0xFF001F24)
+val OnTertiary = Color(0xFFFFFFFF)
+val OnTertiaryContainer = Color(0xFF281900)
+val OnBackground = Color(0xFF191C1D)
+val OnSurface = Color(0xFF191C1D)
+val OnSurfaceVariant = Color(0xFF3F484A)
+val Outline = Color(0xFF70787C)
 
-// Secondary colors
-val TealSecondary = Color(0xFF00BFA5)
-val TealSecondaryVariant = Color(0xFF008E76)
-val TealSecondaryLight = Color(0xFF5DF2D6)
+// Dark theme colors
+val PrimaryDark = Color(0xFF73DAB7)
+val PrimaryContainerDark = Color(0xFF005140)
+val SecondaryDark = Color(0xFF4FD8EB)
+val SecondaryContainerDark = Color(0xFF004F58)
+val TertiaryDark = Color(0xFFEFC158)
+val TertiaryContainerDark = Color(0xFF5C4000)
+val BackgroundDark = Color(0xFF191C1D)
+val SurfaceDark = Color(0xFF101415)
+val SurfaceVariantDark = Color(0xFF3F484A)
+val OnPrimaryDark = Color(0xFF003829)
+val OnPrimaryContainerDark = Color(0xFF73DAB7)
+val OnSecondaryDark = Color(0xFF003640)
+val OnSecondaryContainerDark = Color(0xFF4FD8EB)
+val OnTertiaryDark = Color(0xFF462F00)
+val OnTertiaryContainerDark = Color(0xFFEFC158)
+val OnBackgroundDark = Color(0xFFE0E3E3)
+val OnSurfaceDark = Color(0xFFE0E3E3)
+val OnSurfaceVariantDark = Color(0xFFBFC8CA)
+val OutlineDark = Color(0xFF899294)
 
-// Background colors
-val BackgroundLight = Color(0xFFF8F9FA)
-val BackgroundDark = Color(0xFF121212)
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceDark = Color(0xFF1E1E1E)
-
-// Accent colors
-val AccentOrange = Color(0xFFFF6D00)
-val AccentPurple = Color(0xFF6200EA)
-val AccentRed = Color(0xFFD50000)
-
-// Additional UI colors
-val CardLight = Color(0xFFFFFFFF)
-val CardDark = Color(0xFF2C2C2C)
-val DividerLight = Color(0xFFE0E0E0)
-val DividerDark = Color(0xFF3D3D3D)
-
-// Gradient colors
-val GradientStart = Color(0xFF2962FF)
-val GradientEnd = Color(0xFF00BFA5)
-val GradientStartDark = Color(0xFF0039CB)
-val GradientEndDark = Color(0xFF008E76)
+// Accent colors for specific UI elements
+val AccentBlue = Color(0xFF0094FF)
+val AccentGreen = Color(0xFF00C853)
+val AccentOrange = Color(0xFFFF9100)
+val ErrorRed = Color(0xFFB3261E)
