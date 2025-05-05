@@ -22,6 +22,13 @@ import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
+// Enum to represent AI models available in the app
+enum class AIModel(val displayName: String, val modelName: String) {
+    GEMINI_2_FLASH("Gemini 2.0 Flash", "gemini-2.0-flash"),
+    GEMINI_2_5_FLASH_PREVIEW_0417("Gemini 2.5 Flash Preview 04-17", "gemini-2.5-flash-preview-04-17"),
+    GEMINI_2_5_PRO_PREVIEW_0325("Gemini 2.5 Pro Preview 03-25", "gemini-2.5-pro-preview-03-25")
+}
+
 class DocumentViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> =
         MutableStateFlow(UiState.Initial)
@@ -32,10 +39,27 @@ class DocumentViewModel : ViewModel() {
     private val _feedbackEvent = MutableSharedFlow<String>()
     val feedbackEvent = _feedbackEvent.asSharedFlow()
 
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
-        apiKey = BuildConfig.apiKey
-    )
+    // Add state for selected AI model
+    private val _selectedModel = MutableStateFlow(AIModel.GEMINI_2_5_FLASH_PREVIEW_0417)
+    val selectedModel: StateFlow<AIModel> = _selectedModel.asStateFlow()
+
+    // GenerativeModel is now created via a function based on the selected model
+    private fun getGenerativeModel(): GenerativeModel {
+        return GenerativeModel(
+            modelName = _selectedModel.value.modelName,
+            apiKey = BuildConfig.apiKey
+        )
+    }
+
+    // Function to change the AI model
+    fun setAIModel(model: AIModel) {
+        val previousModel = _selectedModel.value
+        _selectedModel.value = model
+        
+        if (previousModel != model) {
+            _feedbackEvent.tryEmit("Model changed to ${model.displayName}")
+        }
+    }
 
     fun processDocument(bitmap: Bitmap) {
         _uiState.value = UiState.Loading
@@ -164,7 +188,7 @@ class DocumentViewModel : ViewModel() {
     }
 
     private suspend fun extractTextFromImage(bitmap: Bitmap): String {
-        val response = generativeModel.generateContent(
+        val response = getGenerativeModel().generateContent(
             content {
                 image(bitmap)
                 text("Extract all text from this document image. Include all paragraphs, headings, and lists in the exact order they appear.")
@@ -174,7 +198,7 @@ class DocumentViewModel : ViewModel() {
     }
     
     private suspend fun convertToMarkdown(extractedText: String): String {
-        val response = generativeModel.generateContent(
+        val response = getGenerativeModel().generateContent(
             content {
                 text("Convert the following text to markdown format, preserving its structure. Identify and format headings, paragraphs, lists, etc. appropriately:\n\n$extractedText")
             }
@@ -183,7 +207,7 @@ class DocumentViewModel : ViewModel() {
     }
     
     private suspend fun generateFilename(extractedText: String): String {
-        val response = generativeModel.generateContent(
+        val response = getGenerativeModel().generateContent(
             content {
                 text("Generate a short, descriptive filename (without extension) based on this document content. Use only alphanumeric characters, underscores, and hyphens. Keep it under 50 characters:\n\n$extractedText")
             }

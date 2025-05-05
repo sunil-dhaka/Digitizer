@@ -234,6 +234,10 @@ fun DocumentScannerScreen(
 
 @Composable
 fun InitialState() {
+    val viewModel = viewModel<DocumentViewModel>()
+    val selectedModel by viewModel.selectedModel.collectAsState()
+    val context = LocalContext.current
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -272,6 +276,95 @@ fun InitialState() {
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // AI Model Selector
+        Text(
+            text = "Select AI Model",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        
+        // Vertical model selection
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AIModel.values().forEach { model ->
+                val isSelected = model == selectedModel
+                // Remember animation state for selection effect
+                var animateSelection by remember { mutableStateOf(false) }
+                
+                // Animate color change when selection changes
+                val backgroundColor = if (isSelected) {
+                    if (animateSelection) {
+                        // Trigger animation when selected
+                        LaunchedEffect(model) {
+                            animateSelection = true
+                            kotlinx.coroutines.delay(300)
+                            animateSelection = false
+                        }
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    }
+                } else {
+                    MaterialTheme.colorScheme.surface
+                }
+                
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .clickable { 
+                            if (!isSelected) {
+                                animateSelection = true
+                                viewModel.setAIModel(model)
+                                // Show a visual confirmation with haptic feedback
+                                Toast.makeText(context, "Model changed to ${model.displayName}", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    shape = MaterialTheme.shapes.small,
+                    color = backgroundColor
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = model.displayName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
