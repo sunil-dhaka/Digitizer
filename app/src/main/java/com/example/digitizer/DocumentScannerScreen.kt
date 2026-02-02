@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,6 +49,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -96,11 +98,17 @@ fun DocumentScannerScreen(
     
     // Add the camera launcher
     val cameraLauncher = rememberCameraLauncher { uri ->
-        uri?.let { 
+        if (uri != null) { 
             // Call ViewModel to process the captured image
-            documentViewModel.processCameraImage(context, it)
-        } ?: run {
-            Toast.makeText(context, "Camera capture cancelled or failed.", Toast.LENGTH_SHORT).show()
+            documentViewModel.processCameraImage(context, uri)
+        } else {
+            // Show more descriptive error when camera fails
+            val permissionHandler = PermissionHandler(context)
+            if (!permissionHandler.checkCameraPermission()) {
+                Toast.makeText(context, "Camera permission is required to take photos.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Camera capture cancelled or failed. Please try again.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
     
@@ -236,6 +244,7 @@ fun DocumentScannerScreen(
 fun InitialState() {
     val viewModel = viewModel<DocumentViewModel>()
     val selectedModel by viewModel.selectedModel.collectAsState()
+    val saveMarkdown by viewModel.saveMarkdownEnabled.collectAsState()
     val context = LocalContext.current
     
     Column(
@@ -278,6 +287,57 @@ fun InitialState() {
         )
         
         Spacer(modifier = Modifier.height(32.dp))
+        
+        // Save Markdown Toggle
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Save Markdown Files",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Process and save text as markdown",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Switch(
+                    checked = saveMarkdown,
+                    onCheckedChange = { viewModel.setSaveMarkdown(it) }
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
         
         // AI Model Selector
         Text(
@@ -411,6 +471,7 @@ fun SuccessState(
     val scrollState = rememberScrollState()
     val currentDocument = state.currentDocument
     val viewModel = viewModel<DocumentViewModel>()
+    val saveMarkdown by viewModel.saveMarkdownEnabled.collectAsState()
 
     // If there's no current document, show an error or return
     if (currentDocument == null) {
@@ -704,9 +765,14 @@ fun SuccessState(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = if (saveMarkdown) 
+                    MaterialTheme.colorScheme.surface 
+                else 
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = if (saveMarkdown) 4.dp else 1.dp
+            ),
             shape = MaterialTheme.shapes.medium
         ) {
             Column(
@@ -716,33 +782,58 @@ fun SuccessState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Create,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Markdown Text",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Create,
+                            contentDescription = null,
+                            tint = if (saveMarkdown) 
+                                MaterialTheme.colorScheme.secondary 
+                            else 
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Markdown Text",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (saveMarkdown) 
+                                MaterialTheme.colorScheme.onSurface 
+                            else 
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    
+                    if (!saveMarkdown) {
+                        Text(
+                            text = "Will not be saved",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                        )
+                    }
                 }
                 
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-                    color = Color(0xFFF8F8F8), // Simple light gray (slightly different)
+                    color = if (saveMarkdown) 
+                        Color(0xFFF8F8F8) 
+                    else 
+                        Color(0xFFF8F8F8).copy(alpha = 0.6f),
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
                         text = currentDocument.markdownText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF333333), // Dark text for contrast
+                        color = if (saveMarkdown) 
+                            Color(0xFF333333) 
+                        else 
+                            Color(0xFF333333).copy(alpha = 0.6f),
                         modifier = Modifier.padding(12.dp)
                     )
                 }
@@ -750,6 +841,57 @@ fun SuccessState(
         }
         
         Spacer(modifier = Modifier.height(24.dp))
+        
+        // Before the Save button, add the markdown toggle card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Save Markdown Files",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Process and save text as markdown",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Switch(
+                    checked = saveMarkdown,
+                    onCheckedChange = { viewModel.setSaveMarkdown(it) }
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
         
         // Save button
         Button(

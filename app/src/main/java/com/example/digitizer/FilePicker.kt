@@ -6,6 +6,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.documentfile.provider.DocumentFile
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -39,14 +42,19 @@ class FilePickerUtils(private val context: Context) {
         return "${baseName.replace("[^a-zA-Z0-9_-]".toRegex(), "_")}$timeStamp"
     }
 
-    fun createImageUri(): Uri {
-        val imageDir = File(context.cacheDir, "images")
-        if (!imageDir.exists()) {
-            imageDir.mkdirs()
+    fun createImageUri(): Uri? {
+        try {
+            val imageDir = File(context.cacheDir, "images")
+            if (!imageDir.exists()) {
+                imageDir.mkdirs()
+            }
+            val file = File(imageDir, "IMG_${System.currentTimeMillis()}.jpg")
+            val authority = "${context.packageName}.provider" // Ensure this matches AndroidManifest
+            return FileProvider.getUriForFile(context, authority, file)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
         }
-        val file = File(imageDir, "IMG_${System.currentTimeMillis()}.jpg")
-        val authority = "${context.packageName}.provider" // Ensure this matches AndroidManifest
-        return FileProvider.getUriForFile(context, authority, file)
     }
 }
 
@@ -70,28 +78,20 @@ fun rememberCameraLauncher(
     onImageCaptured: (Uri?) -> Unit
 ): CameraLauncher {
     val context = LocalContext.current
-    var tempUri: Uri? = null
+    var tempUri by remember { mutableStateOf<Uri?>(null) }
+    
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
+        if (success && tempUri != null) {
             onImageCaptured(tempUri)
         } else {
             onImageCaptured(null)
         }
     }
     
-    // Define the lambda separately
-    val uriProviderLambda: () -> Uri? = { 
-        tempUri = FilePickerUtils(context).createImageUri()
-        tempUri
-    }
-
     return remember(launcher) {
-        CameraLauncher(launcher).apply {
-            // Pass the defined lambda
-            setUriProvider(uriProviderLambda)
-        }
+        CameraLauncher(context, launcher, onUriCreated = { uri -> tempUri = uri })
     }
 }
 
@@ -116,16 +116,26 @@ class ImagePicker(private val launcher: androidx.activity.result.ActivityResultL
     }
 }
 
-class CameraLauncher(private val launcher: androidx.activity.result.ActivityResultLauncher<Uri>) {
-    private var uriProvider: (() -> Uri?)? = null
-
-    fun setUriProvider(provider: () -> Uri?) {
-        this.uriProvider = provider
-    }
-
+class CameraLauncher(
+    private val context: Context,
+    private val launcher: androidx.activity.result.ActivityResultLauncher<Uri>,
+    private val onUriCreated: (Uri?) -> Unit
+) {
     fun launch() {
-        val uri = uriProvider?.invoke()
-        uri?.let { launcher.launch(it) }
+        try {
+            val utils = FilePickerUtils(context)
+            val uri = utils.createImageUri()
+            
+            if (uri != null) {
+                onUriCreated(uri)
+                launcher.launch(uri)
+            } else {
+                onUriCreated(null) // No valid URI created
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onUriCreated(null)
+        }
     }
 }
 

@@ -42,6 +42,10 @@ class DocumentViewModel : ViewModel() {
     // Add state for selected AI model
     private val _selectedModel = MutableStateFlow(AIModel.GEMINI_2_5_FLASH_PREVIEW_0417)
     val selectedModel: StateFlow<AIModel> = _selectedModel.asStateFlow()
+    
+    // Add state for saving markdown files toggle
+    private val _saveMarkdownEnabled = MutableStateFlow(true)
+    val saveMarkdownEnabled: StateFlow<Boolean> = _saveMarkdownEnabled.asStateFlow()
 
     // GenerativeModel is now created via a function based on the selected model
     private fun getGenerativeModel(): GenerativeModel {
@@ -58,6 +62,22 @@ class DocumentViewModel : ViewModel() {
         
         if (previousModel != model) {
             _feedbackEvent.tryEmit("Model changed to ${model.displayName}")
+        }
+    }
+    
+    // Function to toggle markdown saving
+    fun setSaveMarkdown(enabled: Boolean) {
+        val previousState = _saveMarkdownEnabled.value
+        _saveMarkdownEnabled.value = enabled
+        
+        if (previousState != enabled) {
+            viewModelScope.launch {
+                if (enabled) {
+                    _feedbackEvent.emit("Markdown files will be saved")
+                } else {
+                    _feedbackEvent.emit("Markdown files will not be saved")
+                }
+            }
         }
     }
 
@@ -157,7 +177,21 @@ class DocumentViewModel : ViewModel() {
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                // Verify that the URI is not null and is accessible
+                if (uri == Uri.EMPTY) {
+                    throw Exception("Invalid camera image URI")
+                }
+                
+                // Try to get the bitmap from the uri with error handling
+                val bitmap = try {
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                } catch (e: Exception) {
+                    throw Exception("Failed to read camera image: ${e.message}")
+                }
+                
+                if (bitmap == null) {
+                    throw Exception("Failed to process camera image: Bitmap is null")
+                }
                 
                 // Extract text using OCR
                 val extractedText = extractTextFromImage(bitmap)
@@ -179,6 +213,8 @@ class DocumentViewModel : ViewModel() {
                     documents = listOf(document),
                     currentDocumentIndex = 0
                 )
+                
+                _feedbackEvent.emit("Camera image processed successfully")
             } catch (e: Exception) {
                 val errorMessage = "Failed to process camera image: ${e.message ?: "Unknown error"}"
                 _uiState.value = UiState.Error(errorMessage)
@@ -191,7 +227,7 @@ class DocumentViewModel : ViewModel() {
         val response = getGenerativeModel().generateContent(
             content {
                 image(bitmap)
-                text("Extract all text from this document image. Include all paragraphs, headings, and lists in the exact order they appear.")
+                text("Extract all text from this document image. Include all paragraphs, headings, and lists in the exact order they appear. If no text is visible in the image, describe what the image contains in detail - identify objects, scenes, people, charts, diagrams, or other visual elements. Your description should be comprehensive enough to understand the image content and generate a suitable filename for it.")
             }
         )
         return response.text ?: "No text could be extracted"
@@ -244,14 +280,16 @@ class DocumentViewModel : ViewModel() {
                     throw Exception("Could not create image file.")
                 }
                 
-                // Save the markdown file
-                val markdownFile = directoryDocFile.createFile("text/markdown", "$filename.md")
-                if (markdownFile != null) {
-                    context.contentResolver.openOutputStream(markdownFile.uri)?.use { out ->
-                        out.write(currentDocument.markdownText.toByteArray())
-                    } ?: throw Exception("Could not open output stream for markdown file.")
-                } else {
-                    throw Exception("Could not create markdown file.")
+                // Save the markdown file only if the toggle is enabled
+                if (_saveMarkdownEnabled.value) {
+                    val markdownFile = directoryDocFile.createFile("text/markdown", "$filename.md")
+                    if (markdownFile != null) {
+                        context.contentResolver.openOutputStream(markdownFile.uri)?.use { out ->
+                            out.write(currentDocument.markdownText.toByteArray())
+                        } ?: throw Exception("Could not open output stream for markdown file.")
+                    } else {
+                        throw Exception("Could not create markdown file.")
+                    }
                 }
 
                 // Create a new list of documents with the current one marked as saved (we could add a 'saved' flag to ProcessedDocument if needed)
