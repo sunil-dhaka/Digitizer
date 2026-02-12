@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.svg" alt="Digitizer Banner" width="100%"/>
+</p>
+
 # Digitizer
 
 An Android document scanner app that uses AI to extract and digitize text from images.
