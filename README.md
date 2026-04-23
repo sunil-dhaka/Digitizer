@@ -18,16 +18,15 @@ An Android document scanner app that uses AI to extract and digitize text from i
 
 ## Screenshots
 
-A visual walkthrough of the app on a Pixel-class emulator.
+A visual walkthrough of the app.
 
-![01 Home](assets/01_home.png)
-*Launch screen with the default Gemini 2.5 Flash model selected and Save Markdown enabled. Tap a card to switch between Gemini engines for OCR.*
-
-![02 Save Markdown toggled off](assets/02_markdown_off.png)
-*The Save Markdown switch controls whether a .md file is written alongside the image.*
-
-![03 Gallery picker](assets/03_gallery_picker.png)
-*Tapping the blue FAB opens the Android photo picker to batch-select documents. The green FAB launches the camera for a direct capture.*
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="assets/01_home.png" width="230"/><br/><sub>Home with Gemini model selection</sub></td>
+    <td align="center" width="33%"><img src="assets/02_markdown_off.png" width="230"/><br/><sub>Save Markdown toggled off</sub></td>
+    <td align="center" width="33%"><img src="assets/03_gallery_picker.png" width="230"/><br/><sub>Android photo picker for batch import</sub></td>
+  </tr>
+</table>
 
 ## How It Works
 
